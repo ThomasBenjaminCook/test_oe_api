@@ -1,0 +1,15 @@
+[Unit]
+Description=Open Electricity price proxy
+After=network.target
+
+[Service]
+Type=simple
+User=tom
+WorkingDirectory=/home/tom/test_oe_api
+EnvironmentFile=/home/tom/test_oe_api/.env
+ExecStart=/home/tom/test_oe_api/.venv/bin/python /home/tom/test_oe_api/app.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
