@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from typing import Any, List
+from contextlib import asynccontextmanager
 
 import httpx
 import uvicorn
@@ -16,19 +17,19 @@ MIN_POINTS = 3
 
 load_dotenv(".env")
 
-app = FastAPI(title="Open Electricity proxy", version="0.1.0")
 
-
-@app.on_event("startup")
-async def startup() -> None:
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     app.state.client = httpx.AsyncClient(timeout=10.0)
+    try:
+        yield
+    finally:
+        client: httpx.AsyncClient | None = getattr(app.state, "client", None)
+        if client:
+            await client.aclose()
 
 
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    client: httpx.AsyncClient | None = getattr(app.state, "client", None)
-    if client:
-        await client.aclose()
+app = FastAPI(title="Open Electricity proxy", version="0.1.0", lifespan=lifespan)
 
 
 def _get_auth_header() -> dict[str, str]:
