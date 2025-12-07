@@ -117,17 +117,18 @@ async def get_average_price() -> dict[str, Any]:
 
     payload = response.json()
     values = _extract_prices(payload)
-    if len(values) < MIN_POINTS:
-        raise HTTPException(status_code=502, detail="Upstream response did not contain enough price points")
+    if not values:
+        raise HTTPException(status_code=502, detail="Upstream response did not contain any price points")
 
-    last_three = values[-MIN_POINTS:]
-    average_price = sum(last_three) / len(last_three)
+    points_used = min(MIN_POINTS, len(values))
+    last_values = values[-points_used:]
+    average_price = sum(last_values) / len(last_values)
 
     return {
         "network_region": NETWORK_REGION,
         "interval": INTERVAL,
-        "points_used": len(last_three),
-        "price_points": last_three,
+        "points_used": len(last_values),
+        "price_points": last_values,
         "average_price": average_price,
         "units": "$ / MWh",
     }
