@@ -8,6 +8,7 @@ import httpx
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from network_charge import calculate_local_price
 
 API_BASE = "https://api.openelectricity.org.au/v4/market/network/NEM"
 NETWORK_REGION = "NSW1"
@@ -124,12 +125,15 @@ async def get_average_price() -> dict[str, Any]:
     last_values = values[-points_used:]
     average_price = sum(last_values) / len(last_values)
 
+    current_network_charge = calculate_local_price(datetime.now(ZoneInfo("Australia/Sydney")))
+
     return {
         "network_region": NETWORK_REGION,
         "interval": INTERVAL,
         "points_used": len(last_values),
         "price_points": last_values,
         "average_price": average_price,
+        "average_price_with_network_charge": average_price + current_network_charge,
         "units": "$ / MWh",
     }
 
